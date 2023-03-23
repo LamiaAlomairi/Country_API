@@ -13,40 +13,42 @@ public class Fetch_Data extends MenuItem{
 	
 	public void action() {
 		try {
-            // Send GET request to API endpoint
             URL url = new URL("https://restcountries.com/v3.1/all");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
-            con.setConnectTimeout(5000);
-            con.setReadTimeout(5000);
 
-            // Read response from API endpoint
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(con.getInputStream()));
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
             StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = in.readLine()) != null) {
-                response.append(line);
+
+            while ((inputLine = in.readLine()) != null) {
+              response.append(inputLine);
             }
             in.close();
 
-            // Parse JSON response and display as table
-            JsonArray countries = new JsonArray();
-            System.out.format("| %-25s | %-20s | %-15s | %-15s | %-10s |\n",
-                    "Name", "tld", "cca2", "ccn3", "cca3");
-            System.out.println("-".repeat(87));
-            for (int i = 0; i < countries.size(); i++) {
-                JsonObject country = countries.getAsJsonObject();
-                String name = country.getAsJsonObject("name").getAsString();
-                JsonArray tld = country.getAsJsonObject("tld").getAsJsonArray();
-                String cca2 = country.getAsJsonObject("cca2").getAsString();
-                int ccn3 = country.getAsJsonObject("ccn3").getAsInt();
-                String cca3 = country.getAsJsonObject("cca3").getAsString();
-                System.out.format("| %-25s | %-20s | %-15s | %-15s | %-10d |\n",
-                        name, tld, cca2, ccn3, cca3);
+            System.out.println(response.toString()); // print the response
+
+            JsonParser parser = new JsonParser();
+            JsonArray jsonArray = parser.parse(response.toString()).getAsJsonArray(); // parse the response into a JsonArray
+            
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JsonObject jsonObject = jsonArray.get(i).getAsJsonObject();
+                String common = jsonObject.getAsJsonObject("name").get("common").getAsString(); // extract the name
+                String official = jsonObject.getAsJsonObject("name").get("official").getAsString();
+                JsonObject nativeNameObj = jsonObject.getAsJsonObject("name").getAsJsonObject("nativeName");
+                if(nativeNameObj != null){
+                    JsonObject languageObj = nativeNameObj.getAsJsonObject("Language");
+                    if(languageObj != null){
+                        String officiall = languageObj.get("official").getAsString();
+                        String commonn = languageObj.get("common").getAsString();
+                    }
+                }
+
+                
+                System.out.printf("%-50s %-50s %-50s%n",common,official,nativeNameObj);
             }
-        } catch (IOException e) {
+          } catch (Exception e) {
             e.printStackTrace();
-        }
+          }
 	}
 }
