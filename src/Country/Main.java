@@ -1,12 +1,32 @@
 package Country;
 
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.*;
 
 public class Main {
 	static Scanner scan = new Scanner(System.in);
-	static boolean project = true;
+	static boolean initial_loop = true;
+    static String db;
+    static String user = "sa";
+    static String pass = "root";
+    static Connection con = null;
+    static boolean project = true;
 	static ArrayList<MenuItem> menuList = new ArrayList<MenuItem>(); 
+	
+	public static void setDBName(String db_name) {
+        Main.db = db_name;
+    }
+
+    public static String getDBName() {
+        return db;
+    }
+    
 	public static void main(String[] args) {
+		initial_database();
+        createTable();
 		Array();
 		while(project) {
         	try {
@@ -38,6 +58,63 @@ public class Main {
         }
 
 	}
+//  **************************************************************************************************************************
+//  **********************     Create Database    ****************************************************************************    
+//  **************************************************************************************************************************
+	static void initial_database() {
+    	String url = "jdbc:sqlserver://localhost:1433;" + "encrypt = true;" + "trustServerCertificate = true";
+        try {
+            while (initial_loop) {
+                System.out.print("Enter DataBase Name: ");
+                db = scan.next();
+
+                Driver driver = (Driver) Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver").newInstance();
+                DriverManager.registerDriver(driver);
+                Connection connection = DriverManager.getConnection(url, user, pass);
+                Statement statement = connection.createStatement();
+                String sql = "CREATE DATABASE " + db +";";
+                statement.executeUpdate(sql);
+                initial_loop = false;
+            }
+        } 
+        catch (Exception e) {
+            System.out.println("Some Error Happened >_< ");
+        }
+    }
+    
+//  **************************************************************************************************************************
+//  **********************      Create Table      ****************************************************************************    
+//  **************************************************************************************************************************    
+    static void createTable() {
+    	String url = "jdbc:sqlserver://localhost:1433;" + "databaseName =" + db +";" + "encrypt = true;" + "trustServerCertificate = true";
+    	String user = "sa";
+		String pass = "root";
+	    Connection con = null;
+        try {
+        	Driver driver = (Driver) Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver").newInstance();
+            DriverManager.registerDriver(driver);
+            con = DriverManager.getConnection(url, user, pass);
+
+            Statement st = con.createStatement();
+
+            String sql_university= "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Country') "
+                    + "CREATE TABLE Country(\r\n"
+                    + "    id INT PRIMARY KEY IDENTITY(1,1),\r\n"
+                    + "    common VARCHAR(200), \r\n"
+                    + "    official VARCHAR(200),"
+                    + "    nativeName VARCHAR(200),"
+                    + "    language_common VARCHAR(200),"
+                    + "    language_official VARCHAR(200)"
+                    + ");";
+            st.executeUpdate(sql_university);
+            con.close();
+        }
+	        catch (Exception ex) {
+	            //System.out.println("Something Error Happened -_- ");
+	        	System.err.println(ex);
+	        }		
+			
+		}
 	public static void Array()
     {
     	menuList.add(new Fetch_Data());
@@ -48,7 +125,7 @@ public class Main {
 //    	menuList.add(new SaveInFile());
 //    	menuList.add(new FetchDataFromFile());
 //    	menuList.add(new RemoveTable());
-//	    menuList.add(new Exit());
+	    menuList.add(new Exit());
     }
 
 }
